@@ -3,37 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SunExpress Travel Guide</title>
-  <script src="https://minepi.com"></script>
+  <title>Pioneer Travel Guide</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background-color: #f8f9fa; color: #333; }
     .card { max-width: 400px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     h1 { color: #593B8B; font-size: 24px; }
     p { font-size: 15px; line-height: 1.5; color: #666; }
     button { background-color: #593B8B; color: white; border: none; padding: 14px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; }
-    #status { margin-top: 15px; font-size: 14px; color: #28a745; font-weight: bold; }
+    button:disabled { opacity: 0.6; cursor: default; }
+    #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+    .ok { color: #28a745; }
+    .err { color: #d40e14; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>SunExpress Travel Guide</h1>
+    <h1>Pioneer Travel Guide</h1>
     <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
-    <button onclick="loginWithPi()">Sign in with Pi</button>
+    <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
     <div id="status"></div>
   </div>
 
   <script>
-    const Pi = window.Pi;
-    Pi.init({ version: "2.0", sandbox: false });
+    var statusEl = document.getElementById("status");
+    var btn = document.getElementById("loginBtn");
+
+    function setStatus(text, cls) {
+      statusEl.className = cls || "";
+      statusEl.innerText = text;
+    }
+
+    if (!window.Pi) {
+      setStatus("Pi SDK not loaded. Please open this page in Pi Browser.", "err");
+      btn.disabled = true;
+    } else {
+      Pi.init({ version: "2.0", sandbox: false });
+    }
+
+    function onIncompletePaymentFound(payment) {
+      // No payments yet. If payments are added, send this to the server to complete it.
+      console.log("Incomplete payment found");
+    }
 
     function loginWithPi() {
-      document.getElementById("status").innerText = "Connecting to Pi...";
-      Pi.authenticate(['username'], function(payment) {})
-        .then(function(auth) {
-          document.getElementById("status").innerText = "Welcome, " + auth.user.username + "!";
+      btn.disabled = true;
+      setStatus("Connecting to Pi...");
+      Pi.authenticate(["username"], onIncompletePaymentFound)
+        .then(function (auth) {
+          setStatus("Welcome, " + auth.user.username + "!", "ok");
+          // Later: send auth.accessToken to the server and verify it via /v2/me
         })
-        .catch(function(error) {
-          document.getElementById("status").innerText = "Login cancelled or failed.";
+        .catch(function () {
+          setStatus("Login cancelled or failed. Open this page in Pi Browser.", "err");
+          btn.disabled = false;
         });
     }
   </script>
