@@ -6,26 +6,102 @@
   <title>Pioneer Travel Guide</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background-color: #f8f9fa; color: #333; }
-    .card { max-width: 400px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    h1 { color: #593B8B; font-size: 24px; }
-    p { font-size: 15px; line-height: 1.5; color: #666; }
-    button { background-color: #593B8B; color: white; border: none; padding: 14px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 24px 16px 40px; background-color: #f8f9fa; color: #333; }
+    .wrap { max-width: 720px; margin: auto; }
+    .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center; }
+    h1 { color: #593B8B; font-size: 24px; margin: 0 0 8px; }
+    h2 { color: #593B8B; font-size: 20px; margin: 32px 0 12px; }
+    p { font-size: 15px; line-height: 1.5; color: #666; margin: 0; }
+    button { background-color: #593B8B; color: white; border: none; padding: 14px 24px; font-size: 16px; border-radius: 999px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; }
     button:disabled { opacity: 0.6; cursor: default; }
-    #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+    #status { margin-top: 12px; font-size: 14px; font-weight: bold; }
     .ok { color: #28a745; }
     .err { color: #d40e14; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .dest { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .dest-top { height: 90px; display: flex; align-items: flex-end; padding: 12px 14px; color: white; }
+    .dest-top h3 { margin: 0; font-size: 18px; }
+    .dest-body { padding: 12px 14px 16px; }
+    .dest-region { font-size: 12px; font-weight: bold; color: #593B8B; text-transform: uppercase; letter-spacing: 0.5px; }
+    .dest-desc { font-size: 14px; color: #555; margin: 6px 0 10px; line-height: 1.45; }
+    .dest-tip { font-size: 13px; background: #f3effa; color: #4a3175; border-radius: 10px; padding: 8px 10px; }
+    .dest-season { font-size: 12px; color: #888; margin-top: 8px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Pioneer Travel Guide</h1>
-    <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
-    <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
-    <div id="status"></div>
+  <div class="wrap">
+    <div class="card">
+      <h1>Pioneer Travel Guide</h1>
+      <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
+      <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
+      <div id="status"></div>
+    </div>
+
+    <h2>Popular Destinations</h2>
+    <div class="grid" id="destGrid"></div>
   </div>
 
   <script>
+    // To add a destination, add one line here.
+    var DESTINATIONS = [
+      { name: "Antalya",    region: "Mediterranean", color: "#3567F6",
+        desc: "Old town Kaleici, long beaches and waterfalls close to the city.",
+        tip: "Duden Waterfalls are best visited early morning.", season: "Apr - Oct" },
+      { name: "Bodrum",     region: "Aegean",        color: "#1B115C",
+        desc: "White houses, marinas and a lively coast with castle views.",
+        tip: "Take the dolmus between bays, it is cheap and frequent.", season: "May - Oct" },
+      { name: "Izmir",      region: "Aegean",        color: "#70CBF4",
+        desc: "Seaside promenade, Kemeralti bazaar and day trips to Ephesus.",
+        tip: "Ride the ferry across the bay at sunset.", season: "Apr - Nov" },
+      { name: "Dalaman",    region: "Aegean",        color: "#28a745",
+        desc: "Gateway to Fethiye, Oludeniz and the Dalyan river tombs.",
+        tip: "Book the Dalyan boat tour to see the turtle beach.", season: "May - Oct" },
+      { name: "Cappadocia", region: "Central",       color: "#d4800e",
+        desc: "Fairy chimneys, cave hotels and hot-air balloons at dawn.",
+        tip: "Balloon flights depend on wind; keep a spare morning.", season: "Apr - Jun, Sep - Nov" },
+      { name: "Istanbul",   region: "Marmara",       color: "#593B8B",
+        desc: "Two continents, historic peninsula and Bosphorus ferries.",
+        tip: "Get an Istanbulkart for all public transport.", season: "All year" }
+    ];
+
+    function renderDestinations() {
+      var grid = document.getElementById("destGrid");
+      DESTINATIONS.forEach(function (d) {
+        var card = document.createElement("div");
+        card.className = "dest";
+
+        var top = document.createElement("div");
+        top.className = "dest-top";
+        top.style.background = "linear-gradient(135deg, " + d.color + ", #1B115C)";
+        var h3 = document.createElement("h3");
+        h3.textContent = d.name;
+        top.appendChild(h3);
+
+        var body = document.createElement("div");
+        body.className = "dest-body";
+        body.appendChild(el("div", "dest-region", d.region));
+        body.appendChild(el("div", "dest-desc", d.desc));
+        body.appendChild(el("div", "dest-tip", "Tip: " + d.tip));
+        body.appendChild(el("div", "dest-season", "Best time: " + d.season));
+
+        card.appendChild(top);
+        card.appendChild(body);
+        grid.appendChild(card);
+      });
+    }
+
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      e.className = cls;
+      e.textContent = text;
+      return e;
+    }
+
+    renderDestinations();
+
+    // --- Pi login ---
     var statusEl = document.getElementById("status");
     var btn = document.getElementById("loginBtn");
 
@@ -42,7 +118,6 @@
     }
 
     function onIncompletePaymentFound(payment) {
-      // No payments yet. If payments are added, send this to the server to complete it.
       console.log("Incomplete payment found");
     }
 
@@ -52,7 +127,7 @@
       Pi.authenticate(["username"], onIncompletePaymentFound)
         .then(function (auth) {
           setStatus("Welcome, " + auth.user.username + "!", "ok");
-          // Later: send auth.accessToken to the server and verify it via /v2/me
+          btn.style.display = "none";
         })
         .catch(function () {
           setStatus("Login cancelled or failed. Open this page in Pi Browser.", "err");
