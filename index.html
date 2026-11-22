@@ -21,8 +21,8 @@
 
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
     .dest { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .dest-top { height: 90px; display: flex; align-items: flex-end; padding: 12px 14px; color: white; }
-    .dest-top h3 { margin: 0; font-size: 18px; }
+    .dest-top { height: 140px; display: flex; align-items: flex-end; padding: 12px 14px; color: white; }
+    .dest-top h3 { margin: 0; font-size: 18px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
     .dest-body { padding: 12px 14px 16px; }
     .dest-region { font-size: 12px; font-weight: bold; color: #593B8B; text-transform: uppercase; letter-spacing: 0.5px; }
     .dest-desc { font-size: 14px; color: #555; margin: 6px 0 10px; line-height: 1.45; }
@@ -44,27 +44,33 @@
   </div>
 
   <script>
-    // To add a destination, add one line here.
     var DESTINATIONS = [
-      { name: "Antalya",    region: "Mediterranean", color: "#3567F6",
+      { name: "Antalya",    region: "Mediterranean", color: "#3567F6", img: "antalya.jpg",
         desc: "Old town Kaleici, long beaches and waterfalls close to the city.",
         tip: "Duden Waterfalls are best visited early morning.", season: "Apr - Oct" },
-      { name: "Bodrum",     region: "Aegean",        color: "#1B115C",
+      { name: "Bodrum",     region: "Aegean",        color: "#1B115C", img: "bodrum.jpg",
         desc: "White houses, marinas and a lively coast with castle views.",
         tip: "Take the dolmus between bays, it is cheap and frequent.", season: "May - Oct" },
-      { name: "Izmir",      region: "Aegean",        color: "#70CBF4",
+      { name: "Izmir",      region: "Aegean",        color: "#70CBF4", img: "izmir.jpg",
         desc: "Seaside promenade, Kemeralti bazaar and day trips to Ephesus.",
         tip: "Ride the ferry across the bay at sunset.", season: "Apr - Nov" },
-      { name: "Dalaman",    region: "Aegean",        color: "#28a745",
+      { name: "Dalaman",    region: "Aegean",        color: "#28a745", img: "dalaman.jpg",
         desc: "Gateway to Fethiye, Oludeniz and the Dalyan river tombs.",
         tip: "Book the Dalyan boat tour to see the turtle beach.", season: "May - Oct" },
-      { name: "Cappadocia", region: "Central",       color: "#d4800e",
+      { name: "Cappadocia", region: "Central",       color: "#d4800e", img: "cappadocia.jpg",
         desc: "Fairy chimneys, cave hotels and hot-air balloons at dawn.",
         tip: "Balloon flights depend on wind; keep a spare morning.", season: "Apr - Jun, Sep - Nov" },
-      { name: "Istanbul",   region: "Marmara",       color: "#593B8B",
+      { name: "Istanbul",   region: "Marmara",       color: "#593B8B", img: "istanbul.jpg",
         desc: "Two continents, historic peninsula and Bosphorus ferries.",
         tip: "Get an Istanbulkart for all public transport.", season: "All year" }
     ];
+
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      e.className = cls;
+      e.textContent = text;
+      return e;
+    }
 
     function renderDestinations() {
       var grid = document.getElementById("destGrid");
@@ -74,7 +80,9 @@
 
         var top = document.createElement("div");
         top.className = "dest-top";
-        top.style.background = "linear-gradient(135deg, " + d.color + ", #1B115C)";
+        top.style.background = d.img
+          ? "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 60%), url('" + d.img + "') center/cover, " + d.color
+          : "linear-gradient(135deg, " + d.color + ", #1B115C)";
         var h3 = document.createElement("h3");
         h3.textContent = d.name;
         top.appendChild(h3);
@@ -90,13 +98,6 @@
         card.appendChild(body);
         grid.appendChild(card);
       });
-    }
-
-    function el(tag, cls, text) {
-      var e = document.createElement(tag);
-      e.className = cls;
-      e.textContent = text;
-      return e;
     }
 
     renderDestinations();
