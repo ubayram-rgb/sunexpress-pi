@@ -128,7 +128,7 @@
         btn.disabled = true;
         setStatus("Initializing Pi SDK...");
         
-        // Mainnet testi için sandbox: false
+        // Mainnet testi için sandbox: false (Testnet için true yapın)
         await window.Pi.init({ version: "2.0", sandbox: false });
         
         piReady = true;
