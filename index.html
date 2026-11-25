@@ -117,7 +117,7 @@
       statusEl.innerText = text;
     }
 
-    window.addEventListener("load", async function () {
+    document.addEventListener("DOMContentLoaded", async function () {
       if (!window.Pi) {
         setStatus("Pi SDK not loaded. Please open this page in Pi Browser.", "err");
         btn.disabled = true;
@@ -128,14 +128,14 @@
         btn.disabled = true;
         setStatus("Initializing Pi SDK...");
         
-        // Mainnet testi için sandbox: false olmalı
+        // Mainnet testi için sandbox: false
         await window.Pi.init({ version: "2.0", sandbox: false });
         
         piReady = true;
         btn.disabled = false;
-        setStatus(""); 
+        setStatus("Ready to connect!", "ok"); 
       } catch (err) {
-        setStatus("SDK Error: " + err.message, "err");
+        setStatus("SDK Error: " + (err && err.message ? err.message : String(err)), "err");
       }
     });
 
