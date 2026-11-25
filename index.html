@@ -4,11 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pioneer Travel Guide</title>
-  <script>
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-      location.replace('https:' + window.location.href.substring(window.location.protocol.length));
-    }
-  </script>
   <script src="https://minepi.com"></script>
   <style>
     * { box-sizing: border-box; }
@@ -20,7 +15,7 @@
     p { font-size: 15px; line-height: 1.5; color: #666; margin: 0; }
     button { background-color: #593B8B; color: white; border: none; padding: 14px 24px; font-size: 16px; border-radius: 999px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; }
     button:disabled { opacity: 0.6; cursor: default; }
-    #status { margin-top: 12px; font-size: 14px; font-weight: bold; word-break: break-all; }
+    #status { margin-top: 12px; font-size: 14px; font-weight: bold; word-break: break-word; }
     .ok { color: #28a745; }
     .err { color: #d40e14; }
 
@@ -107,59 +102,52 @@
 
     renderDestinations();
 
-    // --- Pi login ---
+    // --- Pi SDK Başlatma ---
     var statusEl = document.getElementById("status");
     var btn = document.getElementById("loginBtn");
-    var piReady = false;
 
     function setStatus(text, cls) {
       statusEl.className = cls || "";
       statusEl.innerText = text;
     }
 
-    document.addEventListener("DOMContentLoaded", async function () {
-      if (!window.Pi) {
-        setStatus("Pi SDK not loaded. Please open this page in Pi Browser.", "err");
+    window.onload = function () {
+      if (typeof window.Pi === "undefined") {
+        setStatus("Pi SDK not loaded. Open this URL inside Pi Browser.", "err");
         btn.disabled = true;
         return;
       }
 
       try {
-        btn.disabled = true;
-        setStatus("Initializing Pi SDK...");
-        
-        // Mainnet testi için sandbox: false (Testnet için true yapın)
-        await window.Pi.init({ version: "2.0", sandbox: false });
-        
-        piReady = true;
-        btn.disabled = false;
-        setStatus("Ready to connect!", "ok"); 
+        window.Pi.init({ version: "2.0", sandbox: false });
+        setStatus("Ready to connect!", "ok");
       } catch (err) {
-        setStatus("SDK Error: " + (err && err.message ? err.message : String(err)), "err");
+        setStatus("Init Error: " + (err && err.message ? err.message : String(err)), "err");
       }
-    });
+    };
 
     function onIncompletePaymentFound(payment) {
-      console.log("Incomplete payment found:", payment);
+      console.log("Incomplete payment:", payment);
     }
 
-    async function loginWithPi() {
-      if (!piReady) {
-        setStatus("Pi SDK is not ready yet.", "err");
+    function loginWithPi() {
+      if (typeof window.Pi === "undefined") {
+        setStatus("Pi SDK is missing.", "err");
         return;
       }
 
       btn.disabled = true;
       setStatus("Connecting to Pi...");
 
-      try {
-        var auth = await window.Pi.authenticate(["username"], onIncompletePaymentFound);
-        setStatus("Welcome, " + auth.user.username + "!", "ok");
-        btn.style.display = "none";
-      } catch (error) {
-        setStatus("Error: " + (error && error.message ? error.message : String(error)), "err");
-        btn.disabled = false;
-      }
+      window.Pi.authenticate(["username"], onIncompletePaymentFound)
+        .then(function (auth) {
+          setStatus("Welcome, " + auth.user.username + "!", "ok");
+          btn.style.display = "none";
+        })
+        .catch(function (error) {
+          setStatus("Auth Error: " + (error && error.message ? error.message : JSON.stringify(error)), "err");
+          btn.disabled = false;
+        });
     }
   </script>
 </body>
