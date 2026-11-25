@@ -102,7 +102,6 @@
 
     renderDestinations();
 
-    // --- Pi SDK Başlatma ---
     var statusEl = document.getElementById("status");
     var btn = document.getElementById("loginBtn");
 
@@ -111,7 +110,7 @@
       statusEl.innerText = text;
     }
 
-    window.onload = function () {
+    window.addEventListener("load", function () {
       if (typeof window.Pi === "undefined") {
         setStatus("Pi SDK not loaded. Open this URL inside Pi Browser.", "err");
         btn.disabled = true;
@@ -124,7 +123,7 @@
       } catch (err) {
         setStatus("Init Error: " + (err && err.message ? err.message : String(err)), "err");
       }
-    };
+    });
 
     function onIncompletePaymentFound(payment) {
       console.log("Incomplete payment:", payment);
