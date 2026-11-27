@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pioneer Travel Guide</title>
-  <script src="https://minepi.com"></script>
+  <script 
+    src="https://minepi.com" 
+    onload="window.piScriptLoaded = true;" 
+    onerror="window.piScriptError = true;">
+  </script>
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; margin: 0; padding: 24px 16px 40px; background-color: #f8f9fa; color: #333; }
@@ -36,7 +40,7 @@
       <h1>Pioneer Travel Guide</h1>
       <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
       <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
-      <div id="status">Pi SDK kontrol ediliyor...</div>
+      <div id="status">Pi SDK bağlantısı kontrol ediliyor...</div>
     </div>
 
     <h2>Popular Destinations</h2>
@@ -114,29 +118,40 @@
     function initPiSDK() {
       if (piReady) return true;
 
+      if (window.piScriptError) {
+        setStatus("Ağ Hatası: ://minepi.com adresine ulaşılamıyor. İnternet/DNS bağlantınızı kontrol edin.", "err");
+        return false;
+      }
+
       if (typeof window.Pi !== "undefined") {
         try {
-          window.Pi.init({ version: "2.0", sandbox: false });
+          var isSandbox = window.location.href.indexOf("sandbox") !== -1;
+          window.Pi.init({ version: "2.0", sandbox: isSandbox });
           piReady = true;
-          setStatus("Pi bağlantısına hazır!", "ok");
+          setStatus("Pi bağlantısına hazır! (" + (isSandbox ? "Sandbox" : "Production") + ")", "ok");
           return true;
         } catch (err) {
-          setStatus("Init Hatası: " + (err && err.message ? err.message : String(err)), "err");
+          setStatus("Başlatma Hatası: " + (err && err.message ? err.message : String(err)), "err");
           return false;
         }
       }
       return false;
     }
 
-    // SDK geç yüklenirse 5 saniye boyunca her 250ms'de bir kontrol et
     var checkAttempts = 0;
     var sdkInterval = setInterval(function () {
       checkAttempts++;
       if (initPiSDK()) {
         clearInterval(sdkInterval);
-      } else if (checkAttempts >= 20) {
+      } else if (window.piScriptError) {
         clearInterval(sdkInterval);
-        setStatus("Pi SDK bulunamadı. Sayfayı yenileyin veya Pi Browser üzerinden açın.", "err");
+      } else if (checkAttempts >= 25) {
+        clearInterval(sdkInterval);
+        if (window.piScriptLoaded) {
+          setStatus("Dosya indi ancak Pi yetkisi verilmedi. Uygulamayı Pi Developer Portal içinden açın.", "err");
+        } else {
+          setStatus("Zaman Aşımı: ://minepi.com yanıt vermiyor.", "err");
+        }
       }
     }, 250);
 
@@ -145,10 +160,7 @@
     }
 
     function loginWithPi() {
-      if (!initPiSDK()) {
-        setStatus("Pi SDK henüz hazır değil, lütfen bekleyin veya sayfayı yenileyin.", "err");
-        return;
-      }
+      if (!initPiSDK()) return;
 
       btn.disabled = true;
       setStatus("Pi hesabına bağlanılıyor...");
