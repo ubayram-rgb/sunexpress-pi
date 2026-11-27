@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pioneer Travel Guide</title>
-  <!-- DOĞRU PI SDK BAĞLANTISI -->
   <script src="https://minepi.com"></script>
   <style>
     * { box-sizing: border-box; }
@@ -37,7 +36,7 @@
       <h1>Pioneer Travel Guide</h1>
       <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
       <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
-      <div id="status">Pi SDK hazırlanıyor...</div>
+      <div id="status">Pi SDK kontrol ediliyor...</div>
     </div>
 
     <h2>Popular Destinations</h2>
@@ -105,44 +104,54 @@
 
     var statusEl = document.getElementById("status");
     var btn = document.getElementById("loginBtn");
-    var isPiInitialized = false;
+    var piReady = false;
 
     function setStatus(text, cls) {
       statusEl.className = cls || "";
       statusEl.innerText = text;
     }
 
-    function initPi() {
-      if (typeof window.Pi === "undefined") {
-        setStatus("Hata: Pi SDK yüklenemedi. Lütfen uygulamayı Pi Browser içinden açın.", "err");
-        return false;
-      }
+    function initPiSDK() {
+      if (piReady) return true;
 
-      if (!isPiInitialized) {
+      if (typeof window.Pi !== "undefined") {
         try {
-          // Testnet / Sandbox için true, Mainnet için false olmalıdır
-          window.Pi.init({ version: "2.0", sandbox: true });
-          isPiInitialized = true;
+          window.Pi.init({ version: "2.0", sandbox: false });
+          piReady = true;
           setStatus("Pi bağlantısına hazır!", "ok");
+          return true;
         } catch (err) {
-          setStatus("Başlatma Hatası: " + (err && err.message ? err.message : String(err)), "err");
+          setStatus("Init Hatası: " + (err && err.message ? err.message : String(err)), "err");
           return false;
         }
       }
-      return true;
+      return false;
     }
 
-    window.addEventListener("load", initPi);
+    // SDK geç yüklenirse 5 saniye boyunca her 250ms'de bir kontrol et
+    var checkAttempts = 0;
+    var sdkInterval = setInterval(function () {
+      checkAttempts++;
+      if (initPiSDK()) {
+        clearInterval(sdkInterval);
+      } else if (checkAttempts >= 20) {
+        clearInterval(sdkInterval);
+        setStatus("Pi SDK bulunamadı. Sayfayı yenileyin veya Pi Browser üzerinden açın.", "err");
+      }
+    }, 250);
 
     function onIncompletePaymentFound(payment) {
-      console.log("Tamamlanmamış ödeme bulundu:", payment);
+      console.log("Tamamlanmamış ödeme:", payment);
     }
 
     function loginWithPi() {
-      if (!initPi()) return;
+      if (!initPiSDK()) {
+        setStatus("Pi SDK henüz hazır değil, lütfen bekleyin veya sayfayı yenileyin.", "err");
+        return;
+      }
 
       btn.disabled = true;
-      setStatus("Pi ağına bağlanılıyor...");
+      setStatus("Pi hesabına bağlanılıyor...");
 
       window.Pi.authenticate(["username"], onIncompletePaymentFound)
         .then(function (auth) {
@@ -156,4 +165,4 @@
     }
   </script>
 </body>
-</html> 
+</html>
