@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pioneer Travel Guide</title>
-  <script src="https://minepi.com" onload="window.piLoaded=true" onerror="window.piErr=true"></script>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; margin: 0; padding: 24px 16px 40px; background-color: #f8f9fa; color: #333; }
@@ -15,7 +15,7 @@
     p { font-size: 15px; line-height: 1.5; color: #666; margin: 0; }
     button { background-color: #593B8B; color: white; border: none; padding: 14px 24px; font-size: 16px; border-radius: 999px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; }
     button:disabled { opacity: 0.6; cursor: default; }
-    #status { margin-top: 12px; font-size: 14px; font-weight: bold; word-break: break-word; }
+    #status { margin-top: 12px; font-size: 14px; font-weight: bold; word-break: break-all; }
     .ok { color: #28a745; }
     .err { color: #d40e14; }
 
@@ -36,7 +36,7 @@
       <h1>Pioneer Travel Guide</h1>
       <p>Welcome Pioneers! Share flight tips, destination reviews, and local travel itineraries using Pi.</p>
       <button id="loginBtn" onclick="loginWithPi()">Sign in with Pi</button>
-      <div id="status">Pi SDK hazırlanıyor...</div>
+      <div id="status"></div>
     </div>
 
     <h2>Popular Destinations</h2>
@@ -102,58 +102,49 @@
 
     renderDestinations();
 
+    // --- Pi login ---
     var statusEl = document.getElementById("status");
     var btn = document.getElementById("loginBtn");
-    var piReady = false;
 
     function setStatus(text, cls) {
       statusEl.className = cls || "";
       statusEl.innerText = text;
     }
 
-    function initPiSDK() {
-      if (piReady) return true;
-      if (typeof window.Pi !== "undefined") {
-        try {
-          window.Pi.init({ version: "2.0", sandbox: false });
-          piReady = true;
-          setStatus("Pi bağlantısına hazır!", "ok");
-          return true;
-        } catch (err) {
-          setStatus("Init Hatası: " + (err && err.message ? err.message : String(err)), "err");
-          return false;
-        }
-      }
-      return false;
+    if (!window.Pi) {
+      setStatus("Pi SDK not loaded. Please open this page in Pi Browser.", "err");
+      btn.disabled = true;
+    } else {
+      Pi.init({ version: "2.0", sandbox: false });
     }
 
-    var tries = 0;
-    var timer = setInterval(function () {
-      tries++;
-      if (initPiSDK() || tries >= 25) {
-        clearInterval(timer);
-        if (!piReady) {
-          setStatus(window.piErr ? "SDK dosyası engellendi." : "Pi Browser üzerinden açın.", "err");
-        }
-      }
-    }, 250);
-
     function onIncompletePaymentFound(payment) {
-      console.log("Incomplete payment:", payment);
+      console.log("Incomplete payment found");
     }
 
     function loginWithPi() {
-      if (!initPiSDK()) return;
       btn.disabled = true;
-      setStatus("Bağlanılıyor...");
+      setStatus("Connecting to Pi...");
 
-      window.Pi.authenticate(["username"], onIncompletePaymentFound)
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        setStatus("Pi did not respond. Page: " + location.href, "err");
+        btn.disabled = false;
+      }, 20000);
+
+      Pi.authenticate(["username"], onIncompletePaymentFound)
         .then(function (auth) {
-          setStatus("Hoş geldin, " + auth.user.username + "!", "ok");
+          if (done) return;
+          done = true; clearTimeout(timer);
+          setStatus("Welcome, " + auth.user.username + "!", "ok");
           btn.style.display = "none";
         })
         .catch(function (error) {
-          setStatus("Hata: " + (error && error.message ? error.message : JSON.stringify(error)), "err");
+          if (done) return;
+          done = true; clearTimeout(timer);
+          setStatus("Error: " + (error && error.message ? error.message : String(error)), "err");
           btn.disabled = false;
         });
     }
